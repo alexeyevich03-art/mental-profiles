@@ -1,7 +1,7 @@
 import os
 import logging
 import time
-import uuid
+import re
 import asyncio
 import requests
 from datetime import datetime, timedelta, timezone
@@ -15,6 +15,8 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 from supabase import create_client, Client
+import uuid
+from datetime import datetime, timezone
 
 # Завантаження конфігурації
 load_dotenv()
@@ -358,9 +360,9 @@ async def handle_challenge(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         logger.error(f"AI generation error: {str(e)}")
         profile_content = "<h1>Помилка сервера</h1><p>Спробуйте ще раз через декілька хвилин</p>"
     
-    # Збереження даних
+    # Збереження даних (оновлена частина)
     user_id = query.from_user.id
-    profile_id = str(uuid.uuid4())
+    profile_id = str(uuid.uuid4())  # Генеруємо UUID як строку
     profile_url = f"{NETLIFY_URL}/.netlify/functions/get-profile?id={profile_id}"
     
     try:
@@ -384,7 +386,8 @@ async def handle_challenge(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         
     except Exception as e:
         logger.error(f"Supabase save error: {str(e)}")
-        profile_url = "https://example.com/error"
+        profile_url = f"{NETLIFY_URL}/error"
+        context.user_data['profile_url'] = profile_url
     
     # Надсилання результату
     user_name = query.from_user.first_name or "Друже"
@@ -414,7 +417,6 @@ async def handle_challenge(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
     
     return FEEDBACK
-
 # Обробник зворотного зв'язку
 async def handle_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
