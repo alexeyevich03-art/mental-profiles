@@ -1,7 +1,7 @@
 import os
 import logging
 import time
-import re
+import uuid
 import asyncio
 import requests
 from datetime import datetime, timedelta, timezone
@@ -343,7 +343,7 @@ async def handle_challenge(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
         
         response = requests.post(
-            "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-v0.1",
+            "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
             headers=headers,
             json={"inputs": prompt},
             timeout=45
@@ -360,7 +360,7 @@ async def handle_challenge(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     
     # Збереження даних
     user_id = query.from_user.id
-    profile_id = f"{user_id}_{int(time.time())}"
+    profile_id = str(uuid.uuid4())
     profile_url = f"{NETLIFY_URL}/.netlify/functions/get-profile?id={profile_id}"
     
     try:
@@ -397,7 +397,7 @@ async def handle_challenge(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         chat_id=query.message.chat_id,
         message_id=processing_message.message_id,
         text=text,
-        parse_mode=None  # Виправлення помилки парсингу
+        parse_mode=None
     )
     
     # Запит зворотного зв'язку
