@@ -2,6 +2,6 @@
   "name": "your-project-name",
   "version": "1.0.0",
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"  // или последняя версия
+    "@supabase/supabase-js": "^2.39.0"
   }
 }
