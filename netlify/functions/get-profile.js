@@ -2,7 +2,10 @@ const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
   const { id } = event.queryStringParameters;
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY
+  );
   
   try {
     const { data, error } = await supabase
@@ -15,7 +18,10 @@ exports.handler = async (event) => {
     
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'text/html' },
+      headers: { 
+        'Content-Type': 'text/html',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: data.profile_content
     };
     
