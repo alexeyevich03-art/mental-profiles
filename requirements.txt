@@ -3,4 +3,4 @@ python-dotenv==1.0.1
 supabase==2.4.0
 httpx==0.25.2
 requests==2.31.0
-gotrue==2.10.0
+gotrue==2.5.0
