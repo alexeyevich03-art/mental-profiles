@@ -1,4 +1,8 @@
 import os
+TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
+SUPABASE_URL = os.environ['SUPABASE_URL']
+SUPABASE_KEY = os.environ['SUPABASE_KEY']
+HF_API_KEY = os.environ.get('HF_API_KEY', '')  # Якщо не використовуєте HFimport logging
 import logging
 import time
 import re
