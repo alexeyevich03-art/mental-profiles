@@ -3,5 +3,3 @@ python-dotenv==1.0.1
 supabase==2.3.0
 requests==2.31.0
 httpx==0.25.0
-Netlify
-Python
