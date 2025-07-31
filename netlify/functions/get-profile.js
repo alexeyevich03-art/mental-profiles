@@ -1,79 +1,62 @@
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require('@supabase/supabase-js')
 
 exports.handler = async (event) => {
-  // Отримуємо ID профілю з параметрів запиту
-  const { id } = event.queryStringParameters;
-  
-  // Перевіряємо, чи ID не пустий
-  if (!id || typeof id !== 'string') {
+  // Перевірка змінних оточення
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
     return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Не вказано ID профілю або невірний формат' }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    };
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Не налаштовано підключення до бази даних' }),
+      headers: { 'Content-Type': 'application/json' }
+    }
   }
 
-  // Ініціалізуємо клієнт Supabase з додатковими налаштуваннями
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY,
-    {
-      db: {
-        schema: 'public'
-      },
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
-    }
-  );
+  const { id } = event.queryStringParameters || {}
   
+  if (!id) {
+    return {
+      statusCode: 400,
+      body: '<h1>Помилка</h1><p>Не вказано ID профілю</p>',
+      headers: { 'Content-Type': 'text/html' }
+    }
+  }
+
+  // Ініціалізація клієнта з явною перевіркою URL
+  const supabaseUrl = process.env.SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_KEY
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Supabase credentials missing')
+    return {
+      statusCode: 500,
+      body: '<h1>Помилка сервера</h1><p>Спробуйте пізніше</p>',
+      headers: { 'Content-Type': 'text/html' }
+    }
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false }
+  })
+
   try {
-    // Виконуємо запит до Supabase
     const { data, error } = await supabase
       .from('profiles')
       .select('profile_content')
-      .eq('id', id)  // ID тепер TEXT типу
-      .single();
+      .eq('id', id)
+      .single()
 
-    if (error) throw error;
+    if (error) throw error
     
-    // Якщо профіль не знайдено
-    if (!data) {
-      return {
-        statusCode: 404,
-        body: '<h1>Профіль не знайдено</h1><p>Вказаний профіль не існує або був видалений</p>',
-        headers: { 
-          'Content-Type': 'text/html',
-          'Access-Control-Allow-Origin': '*'
-        }
-      };
-    }
-    
-    // Успішна відповідь
     return {
       statusCode: 200,
-      headers: { 
-        'Content-Type': 'text/html',
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: data.profile_content
-    };
-    
+      headers: { 'Content-Type': 'text/html' },
+      body: data?.profile_content || '<h1>Профіль не знайдено</h1>'
+    }
   } catch (error) {
-    // Обробка помилок
-    console.error('Помилка при отриманні профілю:', error);
-    
+    console.error('Database error:', error)
     return {
       statusCode: 500,
-      body: `<h1>Помилка сервера</h1><p>Не вдалося завантажити профіль. Будь ласка, спробуйте пізніше.</p>`,
-      headers: { 
-        'Content-Type': 'text/html',
-        'Access-Control-Allow-Origin': '*'
-      }
-    };
+      body: `<h1>Помилка</h1><p>${error.message}</p>`,
+      headers: { 'Content-Type': 'text/html' }
+    }
   }
-};
+}
