@@ -1,43 +1,36 @@
 const { createClient } = require('@supabase/supabase-js')
 
 exports.handler = async (event) => {
-  // Перевірка змінних оточення
+  // Перевірка наявності обов'язкових змінних
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Не налаштовано підключення до бази даних' }),
+      body: JSON.stringify({ error: 'Supabase credentials not configured' }),
       headers: { 'Content-Type': 'application/json' }
     }
   }
 
+  // Отримання ID з параметрів запиту
   const { id } = event.queryStringParameters || {}
-  
   if (!id) {
     return {
       statusCode: 400,
-      body: '<h1>Помилка</h1><p>Не вказано ID профілю</p>',
-      headers: { 'Content-Type': 'text/html' }
+      body: JSON.stringify({ error: 'Profile ID is required' }),
+      headers: { 'Content-Type': 'application/json' }
     }
   }
-
-  // Ініціалізація клієнта з явною перевіркою URL
-  const supabaseUrl = process.env.SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_KEY
-  
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('Supabase credentials missing')
-    return {
-      statusCode: 500,
-      body: '<h1>Помилка сервера</h1><p>Спробуйте пізніше</p>',
-      headers: { 'Content-Type': 'text/html' }
-    }
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false }
-  })
 
   try {
+    // Ініціалізація клієнта Supabase
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_KEY,
+      {
+        auth: { persistSession: false }
+      }
+    )
+
+    // Запит до бази даних
     const { data, error } = await supabase
       .from('profiles')
       .select('profile_content')
@@ -45,18 +38,28 @@ exports.handler = async (event) => {
       .single()
 
     if (error) throw error
-    
+    if (!data) throw new Error('Profile not found')
+
+    // Успішна відповідь
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'text/html' },
-      body: data?.profile_content || '<h1>Профіль не знайдено</h1>'
+      headers: { 
+        'Content-Type': 'text/html',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: data.profile_content
     }
+
   } catch (error) {
-    console.error('Database error:', error)
+    // Обробка помилок
+    console.error('Error:', error.message)
     return {
       statusCode: 500,
-      body: `<h1>Помилка</h1><p>${error.message}</p>`,
-      headers: { 'Content-Type': 'text/html' }
+      body: JSON.stringify({ 
+        error: 'Failed to fetch profile',
+        details: error.message 
+      }),
+      headers: { 'Content-Type': 'application/json' }
     }
   }
 }
